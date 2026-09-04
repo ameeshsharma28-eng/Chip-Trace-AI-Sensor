@@ -51,24 +51,33 @@ export default function AIInspectionPage() {
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
 
   const startCamera = async () => {
     try {
+      setShowCamera(true); 
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setShowCamera(true);
+      streamRef.current = stream;
+      
+      // Wait for React to mount the <video> element
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.setAttribute("playsinline", "true");
+          videoRef.current.play().catch(e => console.error("Play error:", e));
+        }
+      }, 100);
     } catch (e) {
       console.error("Camera access failed", e);
+      setShowCamera(false);
       alert("Unable to access camera. Please check your permissions.");
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
     setShowCamera(false);
   };

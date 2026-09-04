@@ -44,7 +44,7 @@ export default function TraceabilityPage() {
   }, []);
 
   useEffect(() => {
-    let animationFrameId: number;
+    let requestID: number;
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null;
 
@@ -71,12 +71,11 @@ export default function TraceabilityPage() {
                 });
                 
                 if (code && code.data) {
-                  // Found a QR code!
                   setIsScanning(false);
                   setSearch(code.data);
                   const found = batches.find(b => b.id.toLowerCase() === code.data.toLowerCase());
                   setBatch(found || null);
-                  return; // Stop ticking
+                  return;
                 }
               }
               requestID = requestAnimationFrame(tick);
@@ -88,14 +87,14 @@ export default function TraceabilityPage() {
     }
     
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
       if (requestID) {
         cancelAnimationFrame(requestID);
       }
     };
-  }, [isScanning]);
+  }, [isScanning, batches]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
