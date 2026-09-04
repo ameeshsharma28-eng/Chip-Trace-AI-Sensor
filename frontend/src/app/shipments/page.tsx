@@ -1,13 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import { Truck, Map, AlertTriangle, Navigation, Thermometer, Droplets } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Truck, Map, AlertTriangle, Navigation, Thermometer, Droplets, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { shipments } from "@/lib/mockData";
 
 export default function ShipmentsPage() {
-  const [selectedShipment, setSelectedShipment] = useState(shipments[0]);
+  const [shipments, setShipments] = useState<any[]>([]);
+  const [selectedShipment, setSelectedShipment] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/shipments`);
+        const data = await res.json();
+        setShipments(data);
+        if (data.length > 0) setSelectedShipment(data[0]);
+      } catch (err) {
+        console.error("Failed to load shipments:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!selectedShipment) {
+    return <div>No shipments available.</div>;
+  }
 
   return (
     <div className="space-y-6">

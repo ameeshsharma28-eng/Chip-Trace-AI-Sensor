@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, CheckCircle2, Clock, Truck, Factory, Cpu, Package, Home, QrCode } from "lucide-react";
+import { Search, MapPin, CheckCircle2, Clock, Truck, Factory, Cpu, Package, Home, QrCode, Box } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { batches } from "@/lib/mockData";
+import jsQR from "jsqr";
 
 const STAGES = [
   { id: 1, name: "Raw Material", icon: Box },
@@ -17,20 +17,34 @@ const STAGES = [
   { id: 8, name: "Customer Delivery", icon: MapPin },
 ];
 
-// Re-defining Box here or importing from lucide-react. Let's fix imports.
-import { Box } from "lucide-react";
-
-import jsQR from "jsqr";
-
 export default function TraceabilityPage() {
+  const [batches, setBatches] = useState<any[]>([]);
   const [search, setSearch] = useState("BATCH-2026-004821");
-  const [batch, setBatch] = useState<any>(batches[0]);
+  const [batch, setBatch] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    let requestID: number;
+    async function fetchBatches() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/batches`);
+        const data = await res.json();
+        setBatches(data);
+        if (data.length > 0) {
+          const defaultBatch = data.find((b: any) => b.id === "BATCH-2026-004821") || data[0];
+          setBatch(defaultBatch);
+        }
+      } catch (err) {
+        console.error("Failed to fetch batches:", err);
+      }
+    }
+    fetchBatches();
+  }, []);
+
+  useEffect(() => {
+    let animationFrameId: number;
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null;
 
@@ -40,7 +54,7 @@ export default function TraceabilityPage() {
 
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(s => {
-          stream = s;
+          streamRef.current = s;
           if (videoRef.current) {
             videoRef.current.srcObject = s;
             videoRef.current.setAttribute("playsinline", "true");

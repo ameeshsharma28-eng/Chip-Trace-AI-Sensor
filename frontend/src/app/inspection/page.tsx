@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, AlertTriangle, CheckCircle, Cpu, Ban } from "lucide-react";
+import React, { useState } from "react";
+import { Upload, AlertTriangle, CheckCircle, Cpu, Ban, Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { batches } from "@/lib/mockData";
 
 type Detection = {
   type: string;
@@ -49,6 +48,56 @@ export default function AIInspectionPage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showExplain, setShowExplain] = useState(false);
 
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (e) {
+      console.error("Camera access failed", e);
+      alert("Unable to access camera. Please check your permissions.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setShowCamera(false);
+  };
+
+  const captureAndAnalyze = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth || 1920;
+      canvas.height = video.videoHeight || 1080;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setUploadedImage(reader.result as string);
+              stopCamera();
+              startAnalysis(file);
+            };
+            reader.readAsDataURL(blob);
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -91,7 +140,7 @@ export default function AIInspectionPage() {
         confidence: data.confidence === null || data.confidence === undefined ? null : Number(data.confidence),
         defects: Array.isArray(data.defects) ? data.defects : [],
         detections: Array.isArray(data.detections) ? data.detections : [],
-        batchId: batches[0].id,
+        batchId: "BATCH-2026-004821",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -102,7 +151,7 @@ export default function AIInspectionPage() {
         defects: [],
         detections: [],
         image_quality: "UNKNOWN",
-        batchId: batches[0].id,
+        batchId: "BATCH-2026-004821",
         timestamp: new Date().toISOString(),
         error: "Backend connection failed",
         recommendation: "Inspection unavailable. Ensure the FastAPI backend is running on port 8000.",
@@ -116,6 +165,7 @@ export default function AIInspectionPage() {
     setResult(null);
     setUploadedImage(null);
     setShowExplain(false);
+    setShowCamera(false);
   };
 
   const viewportSrc = showExplain && result?.explanation_image
@@ -134,28 +184,76 @@ export default function AIInspectionPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="col-span-2 bg-white/[0.01] border-white/5 backdrop-blur-xl">
+        <Card className="col-span-2 bg-white/[0.01] border-white/5 backdrop-blur-xl flex flex-col">
           <CardHeader>
             <CardTitle>Inspection Viewport</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-white/20 rounded-lg h-[500px] flex flex-col items-center justify-center bg-black/20 relative overflow-hidden">
-              {!analyzing && !result && (
-                <label className="text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center p-10 w-full h-full justify-center">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4 border border-primary/30 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
-                    <Upload className="w-8 h-8 text-primary" />
+          <CardContent className="flex-1 flex flex-col">
+            <div className="border-2 border-dashed border-white/20 rounded-lg flex-1 min-h-[500px] flex flex-col items-center justify-center bg-black/20 relative overflow-hidden">
+              
+              {!analyzing && !result && !showCamera && (
+                <div className="flex flex-col items-center justify-center space-y-6 p-8">
+                  <div className="flex flex-col md:flex-row gap-6 w-full max-w-md justify-center">
+                    {/* Live Camera Button */}
+                    <button 
+                      onClick={startCamera}
+                      className="flex-1 flex flex-col items-center justify-center p-6 border border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Camera className="w-7 h-7 text-cyan-400" />
+                      </div>
+                      <span className="font-semibold text-white/90">Live Camera Scan</span>
+                      <span className="text-xs text-muted-foreground mt-1 text-center">Scan chip using device camera</span>
+                    </button>
+
+                    {/* Upload Photo Button */}
+                    <label className="flex-1 flex flex-col items-center justify-center p-6 border border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                      <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Upload className="w-7 h-7 text-emerald-400" />
+                      </div>
+                      <span className="font-semibold text-white/90">Upload Photo</span>
+                      <span className="text-xs text-muted-foreground mt-1 text-center">Upload from mobile or desktop</span>
+                    </label>
                   </div>
-                  <h3 className="text-lg font-medium text-white/90">Tap to Scan or Upload Image</h3>
-                  <p className="text-sm text-muted-foreground mt-2">Camera will open on mobile devices</p>
-                  <p className="text-xs text-muted-foreground mt-1">Supports PNG, JPG (Max 5MB)</p>
-                </label>
+                </div>
+              )}
+
+              {showCamera && !analyzing && (
+                <div className="absolute inset-0 w-full h-full flex flex-col bg-black">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  <canvas ref={canvasRef} className="hidden" />
+                  
+                  {/* Camera UI Overlay */}
+                  <div className="absolute inset-0 pointer-events-none border-[40px] border-black/50 flex flex-col items-center justify-center">
+                    <div className="w-64 h-64 border-2 border-cyan-500/50 relative">
+                      {/* Corner markers */}
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-cyan-400"></div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-cyan-400"></div>
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-cyan-400"></div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-cyan-400"></div>
+                      {/* Scanning laser */}
+                      <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,1)] animate-[pulse_2s_ease-in-out_infinite]" style={{ animationName: 'scan' }} />
+                    </div>
+                  </div>
+                  
+                  {/* Controls */}
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4 z-10 px-4">
+                    <button 
+                      onClick={stopCamera} 
+                      className="px-6 py-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={captureAndAnalyze} 
+                      className="px-8 py-3 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all flex items-center gap-2"
+                    >
+                      <Camera className="w-5 h-5" />
+                      Capture & Analyze
+                    </button>
+                  </div>
+                </div>
               )}
 
               {analyzing && (

@@ -26,7 +26,7 @@ export default function CopilotPage() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -35,28 +35,27 @@ export default function CopilotPage() {
     setInput("");
     setIsTyping(true);
 
-    // Mock Copilot Logic
-    setTimeout(() => {
-      let responseText = "I'm sorry, I couldn't understand that query based on the current data.";
-      const lowerInput = userMessage.content.toLowerCase();
-
-      if (lowerInput.includes("risk summary") && lowerInput.includes("batch-2026-004821")) {
-        responseText = "Batch BATCH-2026-004821 is in transit from Singapore to Germany. Risk level: HIGH — main driver is a customs delay at destination, predicted +2 days. Inventory for MCU-AX45 is critically low, and the supplier Alpha Semiconductor Materials has shown recent delays. Recommended: contact the logistics provider and prepare an alternate delivery route.";
-      } else if (lowerInput.includes("where is batch") || lowerInput.includes("batch-2026-004821")) {
-         responseText = "Batch BATCH-2026-004821 is currently In Transit via Global Logistics Ltd. Its last known location is the Suez Canal.";
-      } else if (lowerInput.includes("at risk")) {
-         responseText = "Shipment SHIP-88231 is currently AT RISK due to port congestion and customs delays.";
-      } else if (lowerInput.includes("highest defect rate")) {
-         responseText = "NexGen Components currently has the highest defect rate at 5.4% over the last 30 days.";
-      } else if (lowerInput.includes("enough mcu-ax45")) {
-         responseText = "No, MCU-AX45 has a stockout probability of 85%. You have 82,450 units available but predicted demand is 90,000 units. I recommend reordering within 5 days.";
-      } else if (lowerInput.includes("why is shipment ship-88231 delayed")) {
-         responseText = "Shipment SHIP-88231 has a 78% probability of delay primarily due to port congestion at the destination and pending customs clearance.";
-      }
-
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: "assistant", content: responseText }]);
+    // Copilot Backend Logic
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: input, 
+          history: messages 
+        }),
+      });
+      
+      if (!response.ok) throw new Error("Failed to communicate with Copilot API");
+      
+      const data = await response.json();
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: "assistant", content: data.reply }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: "assistant", content: "Error connecting to AI backend." }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (

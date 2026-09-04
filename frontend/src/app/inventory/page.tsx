@@ -1,13 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import { Box, TrendingUp, AlertTriangle, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Box, TrendingUp, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { inventory } from "@/lib/mockData";
 
 export default function InventoryPage() {
-  const [selectedItem, setSelectedItem] = useState(inventory[0]);
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/inventory`);
+        const data = await res.json();
+        setInventory(data);
+        if (data.length > 0) setSelectedItem(data[0]);
+      } catch (err) {
+        console.error("Failed to load inventory:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!selectedItem) {
+    return <div>No inventory data available.</div>;
+  }
 
   return (
     <div className="space-y-6">
