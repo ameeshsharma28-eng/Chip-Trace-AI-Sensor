@@ -1,0 +1,6 @@
+path: C:/Chip Trace Ai/backend/data/yolo
+train: images/train
+val: images/val
+test: images/test
+nc: 8
+names: ['crack', 'scratch', 'burn', 'bent_pin', 'broken_pin', 'missing_pin', 'foreign_material', 'corrosion']

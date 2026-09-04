@@ -1,0 +1,17 @@
+{
+  "classes": [
+    "background",
+    "crack",
+    "scratch",
+    "burn",
+    "bent_pin",
+    "broken_pin",
+    "missing_pin",
+    "foreign_material",
+    "corrosion"
+  ],
+  "calibrated": true,
+  "temperature": 0.9,
+  "n_train_patches": 1624,
+  "n_val_patches": 419
+}

@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #030712; /* gray-950 */
+  --color-foreground: #f9fafb; /* gray-50 */
+  --color-card: rgba(17, 24, 39, 0.6); /* gray-900 with opacity */
+  --color-card-foreground: #f9fafb;
+  --color-popover: #111827;
+  --color-popover-foreground: #f9fafb;
+  --color-primary: #0ea5e9; /* sky-500 */
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1f2937; /* gray-800 */
+  --color-secondary-foreground: #f9fafb;
+  --color-muted: #1f2937; /* gray-800 */
+  --color-muted-foreground: #9ca3af; /* gray-400 */
+  --color-accent: #1f2937;
+  --color-accent-foreground: #f9fafb;
+  --color-destructive: #ef4444; /* red-500 */
+  --color-destructive-foreground: #f9fafb;
+  --color-border: rgba(255, 255, 255, 0.08); /* ultra subtle border */
+  --color-input: rgba(255, 255, 255, 0.08);
+  --color-ring: #0ea5e9;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentColor);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

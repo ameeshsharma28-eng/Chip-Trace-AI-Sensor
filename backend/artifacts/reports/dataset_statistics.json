@@ -1,0 +1,105 @@
+{
+  "n_images": 4,
+  "corrupt": [],
+  "class_counts": {
+    "crack": 2,
+    "burn": 1,
+    "bent_pin": 1,
+    "normal": 1,
+    "scratch": 1
+  },
+  "imbalance": {
+    "crack": {
+      "count": 2,
+      "fraction": 0.3333333333333333
+    },
+    "burn": {
+      "count": 1,
+      "fraction": 0.16666666666666666
+    },
+    "bent_pin": {
+      "count": 1,
+      "fraction": 0.16666666666666666
+    },
+    "normal": {
+      "count": 1,
+      "fraction": 0.16666666666666666
+    },
+    "scratch": {
+      "count": 1,
+      "fraction": 0.16666666666666666
+    }
+  },
+  "exact_duplicates": {},
+  "near_duplicates": [],
+  "images": [
+    {
+      "name": "cracked_chip.jpg",
+      "labels": [
+        "crack"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 876825,
+      "source_id": "cracked_chip"
+    },
+    {
+      "name": "damaged_chip.jpg",
+      "labels": [
+        "crack",
+        "burn",
+        "bent_pin"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 886046,
+      "source_id": "damaged_chip"
+    },
+    {
+      "name": "good_chip.jpg",
+      "labels": [
+        "normal"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 673321,
+      "source_id": "good_chip"
+    },
+    {
+      "name": "smudged_label.jpg",
+      "labels": [
+        "scratch"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 728643,
+      "source_id": "smudged_label"
+    }
+  ],
+  "leakage_policy": {
+    "unit": "source_id (filename stem / physical capture)",
+    "rule": "All crops, augmentations and synthetic clones of a source stay in the same split.",
+    "real_test_holdout": [
+      "cracked_chip",
+      "damaged_chip",
+      "smudged_label"
+    ],
+    "note": "Only one real normal capture exists (good_chip). Training on photometric clones of that chip and then testing the original would leak identity. The original good_chip is therefore evaluation-only."
+  },
+  "limitations": [
+    "The repository does not contain a production-scale labeled inspection dataset.",
+    "Only 4 real photographs are present under sample_images/.",
+    "Classes crack, burn, bent_pin, scratch appear in real photos; other defect types are synthetic-only.",
+    "Object-detection mAP on real data cannot be statistically trusted with n=3 defective photos.",
+    "No bounding-box annotations were shipped with the dataset; boxes on real images are evaluation overlays from the detector, not ground truth."
+  ],
+  "model_choice": {
+    "selected": "Hybrid: image-quality gate + chip localization + proposal-based defect detector (YOLO-format training data) + patch anomaly model",
+    "rejected": {
+      "image_classifier_only": "Cannot localize or count multiple defects; the product requires boxes.",
+      "segmentation": "No masks exist in the dataset; synthesizing masks would be even less realistic than boxes.",
+      "pure_supervised_on_4_images": "Would overfit and leak identity across splits.",
+      "gemini_vlm": "Not a calibrated inspector; current app mapped its scores incorrectly to 0.0% confidence."
+    }
+  }
+}
