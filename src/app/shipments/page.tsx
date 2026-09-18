@@ -90,12 +90,20 @@ export default function ShipmentsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="w-full h-[300px] bg-card border border-border rounded-lg relative overflow-hidden flex items-center justify-center bg-[url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg')] bg-cover bg-center opacity-70 mix-blend-screen">
+              <div 
+                className="w-full h-[300px] border border-border rounded-lg relative overflow-hidden flex items-center justify-center opacity-80"
+                style={{ 
+                  backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundColor: '#111'
+                }}
+              >
                  {/* Map Pin Mock */}
                  <div className="absolute top-[45%] left-[55%] flex flex-col items-center">
                    <div className="w-4 h-4 bg-primary rounded-full animate-ping absolute"></div>
-                   <div className="w-4 h-4 bg-primary rounded-full relative z-10 border-2 border-background"></div>
-                   <div className="mt-1 px-2 py-0.5 bg-background border border-border rounded text-[10px] font-bold text-primary">
+                   <div className="w-4 h-4 bg-primary rounded-full relative z-10 border-2 border-background shadow-[0_0_10px_rgba(6,182,212,1)]"></div>
+                   <div className="mt-1 px-2 py-0.5 bg-background/85 backdrop-blur-sm border border-border rounded text-[10px] font-bold text-primary">
                      {selectedShipment.currentLocation}
                    </div>
                  </div>
